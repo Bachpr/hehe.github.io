@@ -34,13 +34,13 @@ class Particle {
         this.rotationSpeed = (Math.random() - 0.5) * 0.02;
         this.angle = Math.random() * Math.PI * 2;
         this.trail = [];
-        this.maxTrailLength = 5;
+        this.maxTrailLength = 2; // SHORTER TRAIL for clearer shape
     }
 
     update(time, beatIntensity, rotation) {
-        // Fade in effect
+        // Fade in effect - FASTER
         if (this.fadeIn && this.opacity < 1) {
-            this.opacity += 0.03;
+            this.opacity += 0.15;
             if (this.opacity >= 1) this.fadeIn = false;
         }
 
@@ -77,14 +77,14 @@ class Particle {
             this.trail.shift();
         }
 
-        // Smooth movement to target
-        this.x += (this.targetX - this.x) * 0.15;
-        this.y += (this.targetY - this.y) * 0.15;
-        this.z += (this.targetZ - this.z) * 0.15;
+        // Smooth movement to target - FASTER
+        this.x += (this.targetX - this.x) * 0.3;
+        this.y += (this.targetY - this.y) * 0.3;
+        this.z += (this.targetZ - this.z) * 0.3;
 
-        // Add slight random movement
-        this.x += Math.sin(time * 0.003 + this.pulseOffset) * 0.8;
-        this.y += Math.cos(time * 0.003 + this.pulseOffset) * 0.8;
+        // Add slight random movement - REDUCED for clearer shape
+        this.x += Math.sin(time * 0.003 + this.pulseOffset) * 0.3;
+        this.y += Math.cos(time * 0.003 + this.pulseOffset) * 0.3;
         
         this.angle += this.rotationSpeed;
     }
@@ -276,7 +276,7 @@ const centerX = canvas.width / 2;
 const centerY = canvas.height / 2;
 const scale = 9;
 const heartPoints = createHeartShape(centerX, centerY, scale, 8);
-const particles = fillHeartWithParticles(heartPoints, 2.5);
+const particles = fillHeartWithParticles(heartPoints, 2); // DENSER particles for clearer shape
 
 let time = 0;
 let beatPhase = 0;
@@ -286,10 +286,10 @@ const bpm = 72;
 const beatInterval = (60 / bpm) * 1000;
 
 function animate() {
-    // Trail effect
+    // Trail effect - LESS TRAIL for clearer heart shape
     ctx.fillStyle = currentMode === 'galaxy' 
-        ? 'rgba(10, 5, 30, 0.15)' 
-        : 'rgba(10, 5, 30, 0.2)';
+        ? 'rgba(10, 5, 30, 0.3)' 
+        : 'rgba(10, 5, 30, 0.4)';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
     time++;
