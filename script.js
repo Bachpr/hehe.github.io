@@ -13,6 +13,16 @@ let currentMode = 'particles'; // particles, wireframe, 3d, galaxy
 const modes = ['particles', 'wireframe', '3d', 'galaxy'];
 let modeIndex = 0;
 
+// Heartbeat modes
+let heartbeatMode = 'normal'; // normal, intense, arrhythmia, racing, calm, shock
+const heartbeatModes = ['normal', 'intense', 'arrhythmia', 'racing', 'calm', 'shock'];
+let heartbeatIndex = 0;
+
+// Beat modes
+let beatMode = 'normal'; // normal, intense, arrhythmia, racing, slow, shock
+const beatModes = ['normal', 'intense', 'arrhythmia', 'racing', 'slow', 'shock'];
+let beatModeIndex = 0;
+
 class Particle {
     constructor(x, y, targetX, targetY, color, depth = 0) {
         this.x = x;
@@ -34,19 +44,19 @@ class Particle {
         this.rotationSpeed = (Math.random() - 0.5) * 0.02;
         this.angle = Math.random() * Math.PI * 2;
         this.trail = [];
-        this.maxTrailLength = 2; // SHORTER TRAIL for clearer shape
+        this.maxTrailLength = 3; // OPTIMIZED TRAIL for smooth motion
     }
 
-    update(time, beatIntensity, rotation) {
+    update(time, beatIntensity, rotation, shakeX = 0, shakeY = 0) {
         // Fade in effect - FASTER
         if (this.fadeIn && this.opacity < 1) {
             this.opacity += 0.15;
             if (this.opacity >= 1) this.fadeIn = false;
         }
 
-        // Pulse effect based on heartbeat
+        // Pulse effect based on heartbeat with enhanced intensity
         const pulse = Math.sin(time * 0.005 + this.pulseOffset) * beatIntensity;
-        const scale = 1 + pulse * 0.2;
+        const scale = 1 + pulse * 0.35; // Increased from 0.2 to 0.35
         
         // Calculate position with pulse and 3D rotation
         const centerX = canvas.width / 2;
@@ -67,8 +77,9 @@ class Particle {
         // Perspective projection
         const perspective = 300 / (300 + rotatedZ);
         
-        this.targetX = centerX + rotatedX * scale * perspective;
-        this.targetY = centerY + dy * scale * perspective;
+        // Add shake effect for intense beats
+        this.targetX = centerX + rotatedX * scale * perspective + shakeX;
+        this.targetY = centerY + dy * scale * perspective + shakeY;
         this.targetZ = rotatedZ;
 
         // Store trail
@@ -77,14 +88,14 @@ class Particle {
             this.trail.shift();
         }
 
-        // Smooth movement to target - FASTER
-        this.x += (this.targetX - this.x) * 0.3;
-        this.y += (this.targetY - this.y) * 0.3;
-        this.z += (this.targetZ - this.z) * 0.3;
+        // Smooth movement to target - ULTRA FAST & SMOOTH
+        this.x += (this.targetX - this.x) * 0.5;
+        this.y += (this.targetY - this.y) * 0.5;
+        this.z += (this.targetZ - this.z) * 0.5;
 
-        // Add slight random movement - REDUCED for clearer shape
-        this.x += Math.sin(time * 0.003 + this.pulseOffset) * 0.3;
-        this.y += Math.cos(time * 0.003 + this.pulseOffset) * 0.3;
+        // Add slight random movement - MINIMAL for smooth shape
+        this.x += Math.sin(time * 0.005 + this.pulseOffset) * 0.15;
+        this.y += Math.cos(time * 0.005 + this.pulseOffset) * 0.15;
         
         this.angle += this.rotationSpeed;
     }
@@ -97,37 +108,36 @@ class Particle {
         ctx.globalAlpha = this.opacity * (0.5 + perspective * 0.5);
         
         if (mode === 'particles' || mode === '3d') {
-            // Draw trail
-            this.trail.forEach((point, index) => {
-                const trailOpacity = (index / this.trail.length) * this.opacity * 0.3;
-                ctx.globalAlpha = trailOpacity;
-                const gradient = ctx.createRadialGradient(point.x, point.y, 0, point.x, point.y, size * 2);
-                gradient.addColorStop(0, this.color);
-                gradient.addColorStop(1, this.color.replace('1)', '0)'));
-                ctx.fillStyle = gradient;
-                ctx.beginPath();
-                ctx.arc(point.x, point.y, size, 0, Math.PI * 2);
-                ctx.fill();
-            });
+            // OPTIMIZED: Draw trail with fewer operations
+            if (this.trail.length > 0) {
+                this.trail.forEach((point, index) => {
+                    const trailOpacity = (index / this.trail.length) * this.opacity * 0.4;
+                    ctx.globalAlpha = trailOpacity;
+                    ctx.fillStyle = this.color;
+                    ctx.beginPath();
+                    ctx.arc(point.x, point.y, size * 0.8, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+            }
             
-            ctx.globalAlpha = this.opacity * (0.5 + perspective * 0.5);
+            ctx.globalAlpha = this.opacity * (0.6 + perspective * 0.4);
             
-            // Glow effect
-            const gradient = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, size * 4);
+            // OPTIMIZED: Simplified glow effect
+            const gradient = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, size * 3.5);
             gradient.addColorStop(0, this.color);
-            gradient.addColorStop(0.4, this.color.replace('1)', '0.6)'));
+            gradient.addColorStop(0.5, this.color.replace('1)', '0.5)'));
             gradient.addColorStop(1, this.color.replace('1)', '0)'));
             
             ctx.fillStyle = gradient;
             ctx.beginPath();
-            ctx.arc(this.x, this.y, size * 3, 0, Math.PI * 2);
+            ctx.arc(this.x, this.y, size * 2.5, 0, Math.PI * 2);
             ctx.fill();
             
-            // Core particle with rotation
+            // Core particle - OPTIMIZED: Use circle instead of rotated rect
             ctx.fillStyle = this.color;
-            ctx.translate(this.x, this.y);
-            ctx.rotate(this.angle);
-            ctx.fillRect(-size, -size, size * 2, size * 2);
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, size * 1.2, 0, Math.PI * 2);
+            ctx.fill();
         } else if (mode === 'wireframe') {
             ctx.strokeStyle = this.color;
             ctx.lineWidth = 1;
@@ -276,30 +286,84 @@ const centerX = canvas.width / 2;
 const centerY = canvas.height / 2;
 const scale = 9;
 const heartPoints = createHeartShape(centerX, centerY, scale, 8);
-const particles = fillHeartWithParticles(heartPoints, 2); // DENSER particles for clearer shape
+const particles = fillHeartWithParticles(heartPoints, 2.2); // OPTIMIZED density for performance
 
 let time = 0;
 let beatPhase = 0;
 let rotation = 0;
 let lastBeatTime = 0;
-const bpm = 72;
-const beatInterval = (60 / bpm) * 1000;
+let bpm = 72;
+let beatInterval = (60 / bpm) * 1000;
+let shakeIntensity = 0;
+let shakeDecay = 0.85; // FASTER decay for smoother effect
 
 function animate() {
-    // Trail effect - LESS TRAIL for clearer heart shape
+    // Trail effect - OPTIMIZED for smooth motion
     ctx.fillStyle = currentMode === 'galaxy' 
-        ? 'rgba(10, 5, 30, 0.3)' 
-        : 'rgba(10, 5, 30, 0.4)';
+        ? 'rgba(10, 5, 30, 0.25)' 
+        : 'rgba(10, 5, 30, 0.35)';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
-    time++;
-    beatPhase += 0.075;
-    rotation += 0.005;
+    time += 1.5; // FASTER animation
+    rotation += 0.008; // FASTER rotation
     
-    // Heartbeat pattern
-    const beatCycle = Math.sin(beatPhase) * 0.5 + 0.5;
-    const doubleBeat = Math.sin(beatPhase * 2.2) * 0.35 + 0.65;
-    const beatIntensity = beatCycle * doubleBeat;
+    // Calculate heartbeat based on mode
+    let beatIntensity, beatSpeed;
+    
+    switch(heartbeatMode) {
+        case 'normal':
+            bpm = 72;
+            beatPhase += 0.11; // FASTER
+            const beatCycle = Math.sin(beatPhase) * 0.5 + 0.5;
+            const doubleBeat = Math.sin(beatPhase * 2.2) * 0.35 + 0.65;
+            beatIntensity = beatCycle * doubleBeat;
+            break;
+            
+        case 'intense':
+            bpm = 120;
+            beatPhase += 0.18; // FASTER
+            const intensePulse = Math.sin(beatPhase) * 0.5 + 0.5;
+            const intenseDouble = Math.sin(beatPhase * 2.5) * 0.4 + 0.6;
+            beatIntensity = intensePulse * intenseDouble * 1.5;
+            if (beatIntensity > 0.95) shakeIntensity = 15;
+            break;
+            
+        case 'arrhythmia':
+            bpm = 85;
+            beatPhase += 0.13 + Math.sin(time * 0.015) * 0.04; // FASTER irregular
+            const irregularBeat = Math.sin(beatPhase + Math.sin(time * 0.07) * 2) * 0.5 + 0.5;
+            const skipBeat = Math.sin(beatPhase * 1.7) * 0.4 + 0.6;
+            beatIntensity = irregularBeat * skipBeat;
+            if (Math.random() > 0.97) shakeIntensity = 8;
+            break;
+            
+        case 'racing':
+            bpm = 160;
+            beatPhase += 0.28; // FASTER
+            beatIntensity = Math.sin(beatPhase * 1.5) * 0.6 + 0.7;
+            if (beatIntensity > 0.9) shakeIntensity = 10;
+            break;
+            
+        case 'calm':
+            bpm = 50;
+            beatPhase += 0.07; // FASTER
+            const calmPulse = Math.sin(beatPhase) * 0.4 + 0.5;
+            const calmDouble = Math.sin(beatPhase * 2) * 0.25 + 0.75;
+            beatIntensity = calmPulse * calmDouble * 0.7;
+            break;
+            
+        case 'shock':
+            bpm = 200;
+            beatPhase += 0.42; // FASTER
+            beatIntensity = Math.abs(Math.sin(beatPhase * 3)) * 1.8;
+            if (beatIntensity > 1.2) {
+                shakeIntensity = 25;
+                if (Math.random() > 0.8) rotation += (Math.random() - 0.5) * 0.1;
+            }
+            break;
+    }
+    
+    beatInterval = (60 / bpm) * 1000;
     
     // Play sound on beat
     const currentTime = Date.now();
@@ -308,11 +372,16 @@ function animate() {
         lastBeatTime = currentTime;
     }
     
+    // Calculate shake offset
+    shakeIntensity *= shakeDecay;
+    const shakeX = (Math.random() - 0.5) * shakeIntensity;
+    const shakeY = (Math.random() - 0.5) * shakeIntensity;
+    
     // Sort particles by depth for proper 3D rendering
     particles.sort((a, b) => b.z - a.z);
     
     particles.forEach(particle => {
-        particle.update(time, beatIntensity, rotation);
+        particle.update(time, beatIntensity, rotation, shakeX, shakeY);
         particle.draw(currentMode);
     });
     
@@ -320,6 +389,9 @@ function animate() {
     if (currentMode === 'wireframe') {
         drawConnections();
     }
+    
+    // Update BPM display
+    document.getElementById('bpm').textContent = Math.round(bpm);
     
     requestAnimationFrame(animate);
 }
@@ -380,8 +452,27 @@ document.getElementById('modeBtn').addEventListener('click', () => {
     document.getElementById('modeBtn').textContent = `🎨 ${modeNames[currentMode]}`;
 });
 
-document.getElementById('explosionBtn').addEventListener('click', createExplosion);
-document.getElementById('waveBtn').addEventListener('click', createWave);
+// NEW: Heartbeat mode button
+document.getElementById('explosionBtn').addEventListener('click', () => {
+    heartbeatIndex = (heartbeatIndex + 1) % heartbeatModes.length;
+    heartbeatMode = heartbeatModes[heartbeatIndex];
+    const heartbeatNames = {
+        'normal': '💓 Normal (72)',
+        'intense': '💪 Intense (120)',
+        'arrhythmia': '💔 Arrhythmia (85)',
+        'racing': '⚡ Racing (160)',
+        'calm': '😌 Calm (50)',
+        'shock': '⚠️ Shock (200)'
+    };
+    document.getElementById('explosionBtn').textContent = heartbeatNames[heartbeatMode];
+    beatPhase = 0; // Reset phase for smooth transition
+});
+
+// Explosion button moved to wave button
+document.getElementById('waveBtn').addEventListener('click', () => {
+    createExplosion();
+    setTimeout(createWave, 500);
+});
 
 document.getElementById('soundBtn').addEventListener('click', () => {
     soundEnabled = !soundEnabled;
